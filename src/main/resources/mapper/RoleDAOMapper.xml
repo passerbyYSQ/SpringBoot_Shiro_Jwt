@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="net.ysq.shiro.dao.RoleDAO">
+
+    <!-- 最好在navicat中写好，校验好，再复制过来 -->
+    <select id="getPermsByRoleId" parameterType="int" resultType="Permission">
+        select p.*
+        from tb_role r
+                 left join tb_role_perm rp on r.id = rp.role_id
+                 left join tb_permission p on rp.perm_id = p.id
+        where r.id = #{roleId};
+    </select>
+
+</mapper>

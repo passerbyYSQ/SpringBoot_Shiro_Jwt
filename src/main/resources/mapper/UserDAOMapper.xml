@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="net.ysq.shiro.dao.UserDAO">
+    <insert id="save" parameterType="User" useGeneratedKeys="true" keyProperty="id">
+        insert into tb_user(username, password, salt)
+        values (#{username}, #{password}, #{salt});
+    </insert>
+
+    <select id="findByUsername" parameterType="String" resultType="User">
+        select *
+        from tb_user
+        where username = #{username}
+    </select>
+
+    <update id="updateJwtSecretByUsername" parameterType="String">
+        update tb_user set jwt_secret=#{newJwtSecret} where username=#{username};
+    </update>
+
+<!--    <resultMap id="userMap" type="User">-->
+<!--        <id column="user_id" property="id" />-->
+<!--        <result column="username" property="username" />-->
+<!--        <collection property="roles" javaType="list" ofType="Role">-->
+<!--            <id column="role_id" property="id" />-->
+<!--            <result column="role_name" property="roleName" />-->
+<!--        </collection>-->
+<!--    </resultMap>-->
+
+<!--    <resultMap id="roleList" type="Role">-->
+<!--        <id column="role_id" property="id" />-->
+<!--        <result column="role_name" property="roleName" />-->
+<!--    </resultMap>-->
+
+    <!-- 注意取的别名要与实体类的属性对应，配置文件已经配置了支持驼峰转换 -->
+    <select id="getRolesByUsername" parameterType="String" resultType="Role" >
+        # 复杂的sql语句最好在navicat中编写后，再复制过来
+        select r.*
+        from tb_user u
+                 left join tb_user_role ur on u.id = ur.user_id
+                 left join tb_role r on ur.role_id = r.id
+        where u.username = #{username};
+    </select>
+
+</mapper>
