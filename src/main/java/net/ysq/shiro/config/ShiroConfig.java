@@ -56,14 +56,18 @@ public class ShiroConfig {
     public ShiroFilterFactoryBean shiroFilterFactoryBean(
             DefaultWebSecurityManager securityManager, ShiroFilterChainDefinition chainDefinition) {
         ShiroFilterFactoryBean factoryBean = new ShiroFilterFactoryBean();
-        // Authenticator(Realms), cache
-        factoryBean.setSecurityManager(securityManager); // 必须的
-        factoryBean.setFilterChainDefinitionMap(chainDefinition.getFilterChainMap());
 
+        // 必须的设置。我们自定义的Realm此时已经被设置到securityManager中了
+        factoryBean.setSecurityManager(securityManager);
+
+        // 注册我们写的过滤器
         Map<String, Filter> filters = factoryBean.getFilters();
         filters.put("jwtAuth", new JwtAuthenticatingFilter());
 
         factoryBean.setFilters(filters);
+
+        // 设置请求的过滤规则。其中过滤规则中用到了我们注册的过滤器：jwtAuth
+        factoryBean.setFilterChainDefinitionMap(chainDefinition.getFilterChainMap());
 
         return factoryBean;
     }
@@ -71,17 +75,23 @@ public class ShiroConfig {
     @Bean
     public DefaultWebSecurityManager securityManager(Authenticator authenticator) {
         DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
-        // 所有的Realm都用这个全局缓存，不生效，需要在realm中设置缓存
+        // 所有的Realm都用这个全局缓存。不生效，需要在realm中设置缓存。原因暂时搞不懂。
 //        securityManager.setCacheManager(new EhCacheManager());
         securityManager.setAuthenticator(authenticator);
         return securityManager;
     }
 
+    /**
+     * 设置请求的过滤规则
+     * @return
+     */
     @Bean
     public ShiroFilterChainDefinition shiroFilterChainDefinition() {
         DefaultShiroFilterChainDefinition chainDefinition = new DefaultShiroFilterChainDefinition();
         chainDefinition.addPathDefinition("/user/register", "noSessionCreation,anon");
         chainDefinition.addPathDefinition("/user/login", "noSessionCreation,anon");  //login不做认证，noSessionCreation的作用是用户在操作session时会抛异常
+
+        // 注意第2个参数的"jwtAuth"需要与上面的 filters.put("jwtAuth", new JwtAuthenticatingFilter()); 一致
         chainDefinition.addPathDefinition("/user/logout", "noSessionCreation,jwtAuth[permissive]"); //做用户认证，permissive参数的作用是当token无效时也允许请求访问，不会返回鉴权未通过的错误
         chainDefinition.addPathDefinition("/**", "noSessionCreation,jwtAuth"); // 默认进行用户鉴权
         return chainDefinition;
@@ -89,12 +99,10 @@ public class ShiroConfig {
 
     /**
      * 初始化Authenticator，将我们需要的Realm设置进去
-     * Shiro会将Authenticator设置到SecurityManager里面，然后把SecurityManager设置到ShiroFilterFactoryBean里面
+     * Shiro会将Authenticator设置到SecurityManager里面
      */
     @Bean
     public Authenticator authenticator(@Qualifier("loginRealm") Realm loginRealm, @Qualifier("jwtRealm") Realm jwtRealm) {
-        System.out.println("loginRealm: " + loginRealm);
-        System.out.println("jwtRealm: " + jwtRealm);
 
         ModularRealmAuthenticator authenticator = new ModularRealmAuthenticator();
         //设置两个Realm，一个用于用户登录验证和访问权限获取；一个用于jwt token的认证
@@ -128,7 +136,7 @@ public class ShiroConfig {
         JwtRealm jwtRealm = new JwtRealm();
 
         jwtRealm.setCacheManager(ehCacheManager);
-        jwtRealm.setCachingEnabled(true); // 等价于下面两句话
+        jwtRealm.setCachingEnabled(true);  // 这句话不能少！！！
         jwtRealm.setAuthenticationCachingEnabled(true); // 认证缓存
         jwtRealm.setAuthorizationCachingEnabled(true); // 授权缓存
 
@@ -137,7 +145,8 @@ public class ShiroConfig {
 
     /**
      * 禁用session, 不保存用户登录状态。保证每次请求都重新认证。
-     * 需要注意的是，如果用户代码里调用Subject.getSession()还是可以用session，如果要完全禁用，要配合下面的noSessionCreation的Filter来实现
+     * 需要注意的是，如果用户代码里调用Subject.getSession()还是可以用session，
+     * 如果要完全禁用，要配合上过滤规则的noSessionCreation的Filter来实现
      */
     @Bean
     protected SessionStorageEvaluator sessionStorageEvaluator(){

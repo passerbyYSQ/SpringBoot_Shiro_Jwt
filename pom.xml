@@ -20,21 +20,10 @@
 
     <dependencies>
 
-        <!-- shiro -->
         <dependency>
             <groupId>org.apache.shiro</groupId>
             <artifactId>shiro-spring-boot-web-starter</artifactId>
             <version>1.4.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.5</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.7</version>
         </dependency>
         <!-- Shiro默认的缓存管理 -->
         <dependency>

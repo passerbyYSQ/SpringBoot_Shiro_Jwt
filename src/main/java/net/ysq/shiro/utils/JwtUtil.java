@@ -24,15 +24,10 @@ import java.util.Set;
  */
 public class JwtUtil {
 
-    // 有效时间：1天
-    private static final long EFFECTIVE_DURATION = 1000 * 60 * 60 * 24;
+    // 有效时间：7天
+    private static final long EFFECTIVE_DURATION = 1000 * 60 * 60 * 24 * 7;
     // 发行者
     private static final String ISSUER = "net.ysq";
-    // 密钥
-//    private static final String SECRET = "ysqComeOn!2018";
-    // 加密解密算法，传进密钥
-//    private static final Algorithm ALGORITHM = Algorithm.HMAC256(
-//            SECRET.getBytes(StandardCharsets.UTF_8));
 
     /**
      * 生成Jwt字符串
@@ -122,6 +117,7 @@ public class JwtUtil {
 
     /**
      * 返回过期的时间
+     *
      * @param jwt
      * @return
      */
@@ -134,13 +130,4 @@ public class JwtUtil {
         }
         return null;
     }
-
-//    public static void main(String[] args) {
-//        String jwt = JwtUtil.generateJwt("ysq", "123");
-//        System.out.println(jwt);
-//        DecodedJWT decodedJwt = JWT.decode(jwt);
-//        System.out.println(decodedJwt.getClaim("username").asString());
-//
-//    }
-
 }

@@ -31,11 +31,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void register(User user) {
-        // 生成随机盐
+        // 8个字符的随机字符串，作为加密的随机盐
         String salt = RandomUtil.generateStr(8);
-        // 需要保存到数据库，登录（认证）时候需要使用
+        // 需要保存到数据库，第一次登录（认证）比较时需要使用
         user.setSalt(salt);
 
+        // Md5Hash默认将随机盐拼接到源字符串的前面，然后使用md5加密，再经过x次的哈希散列
+        // 第三个参数（hashIterations）：哈希散列的次数
         Md5Hash md5Hash = new Md5Hash(user.getPassword(), user.getSalt(), 1024);
         user.setPassword(md5Hash.toHex());
 
@@ -45,6 +47,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String generateJwt(String username) {
+        // 8个字符的随机字符串，作为生成jwt的随机盐
+        // 保证每次登录成功返回的Token都不一样
         String jwtSecret = RandomUtil.generateStr(8);
         // 将此次登录成功的jwt secret存到数据库，下次携带jwt时解密需要使用
         userDAO.updateJwtSecretByUsername(username, jwtSecret);

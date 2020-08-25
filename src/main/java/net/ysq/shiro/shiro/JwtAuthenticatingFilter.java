@@ -29,6 +29,7 @@ import java.util.Date;
  */
 public class JwtAuthenticatingFilter extends BasicHttpAuthenticationFilter {
 
+    // 是否刷新token
     private boolean shouldRefreshToken;
 
     public JwtAuthenticatingFilter() {
@@ -36,6 +37,7 @@ public class JwtAuthenticatingFilter extends BasicHttpAuthenticationFilter {
     }
 
     /**
+     * 请求是否允许放行
      * 父类会在请求进入拦截器后调用该方法，返回true则继续，返回false则会调用onAccessDenied()。这里在不通过时，还调用了isPermissive()方法，我们后面解释。
      */
     @Override
@@ -52,7 +54,10 @@ public class JwtAuthenticatingFilter extends BasicHttpAuthenticationFilter {
     }
 
     /**
-     * 父类executeLogin()。父类的这个方法首先会createToken()，然后调用shiro的Subject.login()方法。是不是跟LoginController中的逻辑很像
+     * 父类executeLogin()首先会createToken()，然后调用shiro的Subject.login()方法。
+     *
+     * executeLogin()的逻辑是不是跟UserController里面的密码登录逻辑很像？
+     *
      * @param request
      * @param response
      * @return
@@ -98,7 +103,9 @@ public class JwtAuthenticatingFilter extends BasicHttpAuthenticationFilter {
     }
 
     /**
-     * 登录成功后刷新token
+     * 登录成功后判断是否需要刷新token
+     * 登录成功说明：jwt有效，尚未过期。当离过期时间不足一天时，往响应头中放入新的token返回给前端
+     *
      * @param token
      * @param subject
      * @param request

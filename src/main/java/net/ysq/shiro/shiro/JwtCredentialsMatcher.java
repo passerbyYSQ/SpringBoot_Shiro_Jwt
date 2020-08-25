@@ -13,12 +13,14 @@ import org.apache.shiro.authc.credential.CredentialsMatcher;
 public class JwtCredentialsMatcher implements CredentialsMatcher {
     @Override
     public boolean doCredentialsMatch(AuthenticationToken token, AuthenticationInfo info) {
+        //  AuthenticationInfo info 是我们在JwtRealm中doGetAuthenticationInfo()返回的那个
         User user = (User) info.getPrincipals().getPrimaryPrincipal();
         String secret = (String) info.getCredentials();
 
 //        String tokenStr = ((JwtToken) token).getToken();
         String tokenStr = (String) token.getPrincipal();
 
+        // 校验jwt有效
         return JwtUtil.verifyJwt(tokenStr, user.getUsername(), secret);
     }
 }

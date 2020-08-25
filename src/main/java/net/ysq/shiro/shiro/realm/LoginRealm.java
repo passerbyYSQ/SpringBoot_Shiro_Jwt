@@ -40,16 +40,22 @@ public class LoginRealm extends AuthorizingRealm {
      * 或者在ShiroConfig中设置
      */
     public LoginRealm() {
-        // 匹配器
+        // 匹配器。需要与密码加密规则一致
         HashedCredentialsMatcher hashedCredentialsMatcher = new HashedCredentialsMatcher();
         // 设置匹配器的加密算法
         hashedCredentialsMatcher.setHashAlgorithmName(Md5Hash.ALGORITHM_NAME);
-        // 设置匹配器的散列次数
+        // 设置匹配器的哈希散列次数
         hashedCredentialsMatcher.setHashIterations(1024);
         // 将对应的匹配器设置到Realm中
         this.setCredentialsMatcher(hashedCredentialsMatcher);
     }
 
+    /**
+     * 可以往Shiro中注册多种Realm。某种Token对象需要对应的Realm来处理。
+     * 复写该方法表示该方法支持处理哪一种Token
+     * @param token
+     * @return
+     */
     @Override
     public boolean supports(AuthenticationToken token) {
         return token instanceof UsernamePasswordToken;
@@ -87,9 +93,9 @@ public class LoginRealm extends AuthorizingRealm {
 
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
-        // 获取身份信息
+        // 从Token中获取身份信息。这里实际上是username，这里从UsernamePasswordToken的源码可以看出
         String principal = (String) token.getPrincipal();
-        // 从容器中获取UserService组件
+        // 从IOC容器中获取UserService组件
         UserService userService = (UserService) ApplicationContextUtil.getBean("userService");
 
         User user = userService.findByUsername(principal);

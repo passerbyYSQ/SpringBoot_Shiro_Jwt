@@ -40,6 +40,8 @@ public class JwtRealm extends AuthorizingRealm {
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
 //        JwtToken jwtToken = (JwtToken) token;
 //        String tokenStr = jwtToken.getToken();
+
+        // 取决于JwtToken的getPrincipal()
         String tokenStr = (String) token.getPrincipal();
 
         // 从jwt字符串中解析出username信息
@@ -49,6 +51,7 @@ public class JwtRealm extends AuthorizingRealm {
             // 根据token中的username去数据库核对信息，返回用户信息，并封装称SimpleAuthenticationInfo给Matcher去校验
             User user = userService.findByUsername(username);
             // principle是身份信息，简单的可以放username，也可以将User对象作为身份信息
+            // 身份信息可以在登录成功之后通过subject.getPrinciple()取出
             return new SimpleAuthenticationInfo(user, user.getJwtSecret(), this.getName());
         }
 

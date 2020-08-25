@@ -49,7 +49,6 @@ public class UserController {
 
         try {
             userService.register(user);
-            // 注册成功，跳转到登录页面去认证
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             e.printStackTrace();
@@ -70,33 +69,33 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<String> login(String username, String password) {
         // 前期的注入工作已经由SpringBoot完成了
-        // 获取主体对象
+        // 获取当前来访用户的主体对象
         Subject subject = SecurityUtils.getSubject();
 
         try {
+            // 执行登录，如果登录失败会直接抛出异常，并进入对应的catch
             subject.login(new UsernamePasswordToken(username, password));
-            // 实际上就是User。为什么？看LoginRealm的SimpleAuthenticationInfo的传参
+
+            // 获取主体的身份信息
+            // 实际上是User。为什么？
+            // 取决于LoginRealm中的doGetAuthenticationInfo()方法中SimpleAuthenticationInfo构造函数的第一个参数
             User user = (User) subject.getPrincipal();
 
-            // 签发jwt token
+            // 生成jwt
             String jwt = userService.generateJwt(user.getUsername());
 
+            // 将jwt放入到响应头中
             return ResponseEntity.ok().header("token", jwt).build();
 
         } catch (UnknownAccountException e) {
             // username 错误
             e.printStackTrace();
-
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("username不存在");
         } catch (IncorrectCredentialsException e) {
             // password 错误
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("password错误");
         }
-
-        // 认证失败回到login.jsp
-        // 可能会携带错误信息
-//        return "redirect:/login.jsp";
     }
 
     /**
