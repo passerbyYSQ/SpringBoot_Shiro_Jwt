@@ -20,7 +20,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 /**
@@ -37,6 +36,8 @@ public class JwtAuthenticatingFilter extends BasicHttpAuthenticationFilter {
     }
 
     /**
+     * AccessControlFilter的onPreHandle：isAccessAllowed || onAccessDenied
+     *
      * 请求是否允许放行
      * 父类会在请求进入拦截器后调用该方法，返回true则继续，返回false则会调用onAccessDenied()。这里在不通过时，还调用了isPermissive()方法，我们后面解释。
      */
@@ -51,6 +52,25 @@ public class JwtAuthenticatingFilter extends BasicHttpAuthenticationFilter {
             System.out.println("Error occurs when login");
         }
         return allowed || super.isPermissive(mappedValue);
+    }
+
+    /**
+     * 如果这个Filter在之前isAccessAllowed（）方法中返回false,则会进入这个方法。我们这里直接返回错误的response
+     * @param request
+     * @param response
+     * @return
+     * @throws Exception
+     */
+    @Override
+    protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
+        HttpServletResponse httpResponse = WebUtils.toHttp(response);
+        httpResponse.setCharacterEncoding("UTF-8");
+        httpResponse.setContentType("application/json;charset=UTF-8");
+        httpResponse.setStatus(HttpStatus.NON_AUTHORITATIVE_INFORMATION.value());
+        PrintWriter writer = response.getWriter();
+        writer.print("无效token");
+        //fillCorsHeader(request, httpResponse);
+        return false;
     }
 
     /**
@@ -81,25 +101,6 @@ public class JwtAuthenticatingFilter extends BasicHttpAuthenticationFilter {
         }
 
         return null;
-    }
-
-    /**
-     * 如果这个Filter在之前isAccessAllowed（）方法中返回false,则会进入这个方法。我们这里直接返回错误的response
-     * @param request
-     * @param response
-     * @return
-     * @throws Exception
-     */
-    @Override
-    protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
-        HttpServletResponse httpResponse = WebUtils.toHttp(response);
-        httpResponse.setCharacterEncoding("UTF-8");
-        httpResponse.setContentType("application/json;charset=UTF-8");
-        httpResponse.setStatus(HttpStatus.NON_AUTHORITATIVE_INFORMATION.value());
-        PrintWriter writer = response.getWriter();
-        writer.print("无效token");
-        fillCorsHeader(request, httpResponse);
-        return false;
     }
 
     /**
@@ -136,30 +137,35 @@ public class JwtAuthenticatingFilter extends BasicHttpAuthenticationFilter {
     }
 
     /**
-     * 添加跨域支持
+     * 添加跨域支持。在这里设置跨域不包括登录和注册路径
+     * 所以，我们需要通过SpringBoot来设置全局的跨域！！！
+     *
      * @param request
      * @param response
      * @throws Exception
+     * @return
      */
-    @Override
-    protected void postHandle(ServletRequest request, ServletResponse response) {
-        fillCorsHeader(request, response);
-    }
+//    @Override
+//    protected boolean preHandle(ServletRequest request, ServletResponse response) throws Exception {
+//        return fillCorsHeader(request, response);
+//    }
 
     /**
      * 设置跨域
      */
-    public void fillCorsHeader(ServletRequest request, ServletResponse response) {
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
-        httpResponse.setHeader("Access-control-Allow-Origin", httpRequest.getHeader("Origin"));
-        httpResponse.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,DELETE");
-        httpResponse.setHeader("Access-Control-Allow-Headers", httpRequest.getHeader("Access-Control-Request-Headers"));
-        // 跨域时会首先发送一个option请求，这里我们给option请求直接返回正常状态
-        if (httpRequest.getMethod().equals(RequestMethod.OPTIONS.name())) {
-            httpResponse.setStatus(HttpStatus.OK.value());
-        }
-    }
+//    public boolean fillCorsHeader(ServletRequest request, ServletResponse response) throws Exception {
+//        HttpServletRequest httpRequest = (HttpServletRequest) request;
+//        HttpServletResponse httpResponse = (HttpServletResponse) response;
+//        httpResponse.setHeader("Access-control-Allow-Origin", httpRequest.getHeader("Origin"));
+//        httpResponse.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,DELETE");
+//        httpResponse.setHeader("Access-Control-Allow-Headers", httpRequest.getHeader("Access-Control-Request-Headers"));
+//        // 跨域时会首先发送一个option请求，这里我们给option请求直接返回正常状态
+//        if (httpRequest.getMethod().equals(RequestMethod.OPTIONS.name())) {
+//            httpResponse.setStatus(HttpStatus.OK.value());
+//            return false;
+//        }
+//        return super.preHandle(request, response);
+//    }
 
     public boolean isShouldRefreshToken() {
         return shouldRefreshToken;
