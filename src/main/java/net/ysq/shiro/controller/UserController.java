@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.concurrent.ConcurrentMap;
+
 /**
  * 通过注解实现权限控制
  * 在方法前添加注解 @RequiredRoles 或 @RequiredPermissions
@@ -34,6 +36,7 @@ public class UserController {
 
     @RequestMapping("/info")
     public ResponseEntity<String> index() {
+
         return ResponseEntity.ok("用户信息！这个接口需要携带有效的token才能访问");
     }
 

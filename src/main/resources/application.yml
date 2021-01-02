@@ -15,7 +15,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: 'jdbc:mysql://127.0.0.1:3306/shiro?characterEncoding=utf-8&serverTimezone=Asia/Shanghai'
     username: 'root'
-    password: 'ysqJYKL2010'
+    password: ''
 
 mybatis:
   type-aliases-package: net.ysq.shiro.entity

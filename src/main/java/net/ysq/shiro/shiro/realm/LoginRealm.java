@@ -75,7 +75,6 @@ public class LoginRealm extends AuthorizingRealm {
             for (Role role : roles) {
 //                System.out.println("---: " + role.getId() + "----" + role.getRoleName());
                 authorizationInfo.addRole(role.getRoleName());
-
                 // 查询当前角色的权限信息
                 List<Permission> perms = userService.getPermsByRoleId(role.getId());
                 if (!CollectionUtils.isEmpty(perms)) {
