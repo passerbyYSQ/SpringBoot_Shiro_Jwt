@@ -25,18 +25,20 @@
             <artifactId>shiro-spring-boot-web-starter</artifactId>
             <version>1.4.0</version>
         </dependency>
+
         <!-- Shiro默认的缓存管理 -->
         <dependency>
             <groupId>org.apache.shiro</groupId>
             <artifactId>shiro-ehcache</artifactId>
             <version>1.5.3</version>
         </dependency>
+
         <!-- apache为SpringBoot整合shiro提供的starter -->
-        <dependency>
-            <groupId>org.apache.shiro</groupId>
-            <artifactId>shiro-spring-boot-starter</artifactId>
-            <version>1.5.3</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.shiro</groupId>-->
+<!--            <artifactId>shiro-spring-boot-starter</artifactId>-->
+<!--            <version>1.5.3</version>-->
+<!--        </dependency>-->
 
         <!-- JWT -->
         <dependency>
@@ -50,6 +52,22 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
+        <!-- Redis连接池Lettuce：https://blog.csdn.net/zzhongcy/article/details/102584028/ -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.crazycake</groupId>-->
+<!--            <artifactId>shiro-redis</artifactId>-->
+<!--            <version>3.3.1</version>-->
+<!--        </dependency>-->
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+
 
         <!-- 引入tomcat解析jsp的依赖 -->
         <dependency>

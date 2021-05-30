@@ -1,23 +1,19 @@
 package net.ysq.shiro.controller;
 
-import net.ysq.shiro.entity.User;
+import net.ysq.shiro.dto.ResultModel;
+import net.ysq.shiro.dto.StatusCode;
+import net.ysq.shiro.po.User;
 import net.ysq.shiro.service.UserService;
-import net.ysq.shiro.utils.JwtUtil;
+import net.ysq.shiro.shiro.JwtToken;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authc.AuthenticationException;
-import org.apache.shiro.authc.IncorrectCredentialsException;
-import org.apache.shiro.authc.UnknownAccountException;
-import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authz.annotation.RequiresRoles;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-
-import java.util.concurrent.ConcurrentMap;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
  * 通过注解实现权限控制
@@ -29,93 +25,69 @@ import java.util.concurrent.ConcurrentMap;
  */
 @Controller
 @RequestMapping("/user")
+@ResponseBody
 public class UserController {
 
     @Autowired
     private UserService userService;
 
+    @RequiresRoles({"ysq1"})
     @RequestMapping("/info")
     public ResponseEntity<String> index() {
-
         return ResponseEntity.ok("用户信息！这个接口需要携带有效的token才能访问");
     }
 
     /**
      * 用户注册
-     * @param user
-     * @return
      */
     @PostMapping("/register")
-    public ResponseEntity<String> register(User user) {
+    public ResultModel register(String username, String password) {
         // 参数判断省略
         // ...
 
-        try {
-            userService.register(user);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // 错误提示信息省略...
-        return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("客户端传参错误");
+        userService.register(username, password);
+        return ResultModel.success();
     }
 
     /**
-     * 用户登录（身份认证）
-     * Shiro会缓存认证信息
-     *
-     * @param username
-     * @param password
-     * @return
+     * 用户登录，签发token
      */
     @PostMapping("/login")
-    public ResponseEntity<String> login(String username, String password) {
-        // 前期的注入工作已经由SpringBoot完成了
-        // 获取当前来访用户的主体对象
-        Subject subject = SecurityUtils.getSubject();
+    public ResultModel<String> login(String username, String password) {
+        // 参数校验略
+        // ...
 
-        try {
-            // 执行登录，如果登录失败会直接抛出异常，并进入对应的catch
-            subject.login(new UsernamePasswordToken(username, password));
-
-            // 获取主体的身份信息
-            // 实际上是User。为什么？
-            // 取决于LoginRealm中的doGetAuthenticationInfo()方法中SimpleAuthenticationInfo构造函数的第一个参数
-            User user = (User) subject.getPrincipal();
-
-            // 生成jwt
-            String jwt = userService.generateJwt(user.getUsername());
-
-            // 将jwt放入到响应头中
-            return ResponseEntity.ok().header("token", jwt).build();
-
-        } catch (UnknownAccountException e) {
-            // username 错误
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("username不存在");
-        } catch (IncorrectCredentialsException e) {
-            // password 错误
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("password错误");
+        User user = userService.login(username, password);
+        if (user == null) {
+            return ResultModel.failed(StatusCode.LOGIN_FAILED); // 登录失败
         }
+
+        // 生成jwt
+        String jwt = userService.generateJwt(user);
+
+        Subject subject = SecurityUtils.getSubject();
+        // 由于jwt是正确的，所以这里的login必定成功。此举是为了将认证信息缓存起来
+        subject.login(new JwtToken(jwt));
+
+        // 为什么登录不使用UsernamePasswordToken和定义专门的LoginRealm（Service层的逻辑）来处理UsernamePasswordToken？
+        // 由于密码登录只用一次，成功之后都凭借jwt令牌来访问
+        // 经过LoginRealm后所缓存起来的认证信息之后多不会被用到。。个人想法
+
+        return ResultModel.success(jwt);
     }
 
     /**
      * 退出登录
-     * 销毁主体的认证记录（信息），下次访问需要重新认证
-     *
-     * @return
+     * 销毁主体的认证信息
      */
     @RequestMapping("/logout")
-    public ResponseEntity<String> logout() {
+    public ResultModel logout() {
         Subject subject = SecurityUtils.getSubject();
-
-        User user = (User) subject.getPrincipal();
-        userService.logout(user.getUsername());
+        // 为什么可以强制转成User？与在Realm中认证方法返回的SimpleAuthenticationInfo()的第一个参数有关
+        //User user = (User) subject.getPrincipal();
+        //userService.logout(user.getUsername());
         subject.logout();
-
-        return ResponseEntity.ok().build();
+        return ResultModel.success();
     }
 
 }

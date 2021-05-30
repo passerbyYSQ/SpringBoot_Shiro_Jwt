@@ -1,8 +1,8 @@
 package net.ysq.shiro.service;
 
-import net.ysq.shiro.entity.Permission;
-import net.ysq.shiro.entity.Role;
-import net.ysq.shiro.entity.User;
+import net.ysq.shiro.po.Permission;
+import net.ysq.shiro.po.Role;
+import net.ysq.shiro.po.User;
 
 import java.util.List;
 
@@ -15,11 +15,14 @@ import java.util.List;
  */
 public interface UserService {
 
-    /**
-     * 注册的业务代码
-     * @param user
-     */
-    void register(User user);
+
+    void register(String username, String password);
+
+    User login(String username, String password);
+
+    String generateJwt(User user);
+
+    void logout(String username);
 
     User findByUsername(String username);
 
@@ -37,12 +40,4 @@ public interface UserService {
      * @return
      */
     List<Permission> getPermsByRoleId(Integer roleId);
-
-    /**
-     * 根据username更新jwt密钥
-     * @param username
-     */
-    String generateJwt(String username);
-
-    void logout(String username);
 }

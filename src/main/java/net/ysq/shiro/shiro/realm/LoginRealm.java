@@ -1,27 +1,17 @@
 package net.ysq.shiro.shiro.realm;
 
-import com.sun.javafx.scene.traversal.Algorithm;
-import net.ysq.shiro.entity.Permission;
-import net.ysq.shiro.entity.Role;
-import net.ysq.shiro.entity.User;
+import net.ysq.shiro.po.User;
 import net.ysq.shiro.service.UserService;
-import net.ysq.shiro.utils.ApplicationContextUtil;
+import net.ysq.shiro.shiro.MyByteSource;
+import net.ysq.shiro.utils.SpringUtils;
 import org.apache.shiro.authc.*;
-import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.authz.AuthorizationInfo;
-import org.apache.shiro.authz.SimpleAuthorizationInfo;
-import org.apache.shiro.crypto.hash.Md5Hash;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
-import org.apache.shiro.util.ByteSource;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import java.util.Collections;
-import java.util.List;
-
 /**
+ *
  * @author passerbyYSQ
  * @create 2020-08-20 23:31
  */
@@ -37,20 +27,6 @@ public class LoginRealm extends AuthorizingRealm {
 
 
     /**
-     * 或者在ShiroConfig中设置
-     */
-    public LoginRealm() {
-        // 匹配器。需要与密码加密规则一致
-        HashedCredentialsMatcher hashedCredentialsMatcher = new HashedCredentialsMatcher();
-        // 设置匹配器的加密算法
-        hashedCredentialsMatcher.setHashAlgorithmName(Md5Hash.ALGORITHM_NAME);
-        // 设置匹配器的哈希散列次数
-        hashedCredentialsMatcher.setHashIterations(1024);
-        // 将对应的匹配器设置到Realm中
-        this.setCredentialsMatcher(hashedCredentialsMatcher);
-    }
-
-    /**
      * 可以往Shiro中注册多种Realm。某种Token对象需要对应的Realm来处理。
      * 复写该方法表示该方法支持处理哪一种Token
      * @param token
@@ -63,30 +39,6 @@ public class LoginRealm extends AuthorizingRealm {
 
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
-        // 获取身份信息
-        String primaryPrincipal = (String) principals.getPrimaryPrincipal();
-
-        // 从容器中获取UserService组件
-        UserService userService = (UserService) ApplicationContextUtil.getBean("userService");
-        List<Role> roles = userService.getRolesByUsername(primaryPrincipal);
-
-        if (!CollectionUtils.isEmpty(roles)) {
-            SimpleAuthorizationInfo authorizationInfo = new SimpleAuthorizationInfo();
-            for (Role role : roles) {
-//                System.out.println("---: " + role.getId() + "----" + role.getRoleName());
-                authorizationInfo.addRole(role.getRoleName());
-                // 查询当前角色的权限信息
-                List<Permission> perms = userService.getPermsByRoleId(role.getId());
-                if (!CollectionUtils.isEmpty(perms)) {
-                    for (Permission perm : perms) {
-                        authorizationInfo.addStringPermission(perm.getPermissionName());
-                    }
-                }
-
-            }
-            return authorizationInfo;
-        }
-
         return null;
     }
 
@@ -95,15 +47,15 @@ public class LoginRealm extends AuthorizingRealm {
         // 从Token中获取身份信息。这里实际上是username，这里从UsernamePasswordToken的源码可以看出
         String principal = (String) token.getPrincipal();
         // 从IOC容器中获取UserService组件
-        UserService userService = (UserService) ApplicationContextUtil.getBean("userService");
+        UserService userService = (UserService) SpringUtils.getBean("userService");
 
         User user = userService.findByUsername(principal);
 
         if (!ObjectUtils.isEmpty(user)) {
             // 返回正确的信息（数据库存储的），作为比较的基准
-            return  new SimpleAuthenticationInfo(
+            return new SimpleAuthenticationInfo(
                     user, user.getPassword(),
-                    ByteSource.Util.bytes(user.getSalt()), this.getName()
+                    new MyByteSource(user.getSalt()), this.getName()
             );
         }
 

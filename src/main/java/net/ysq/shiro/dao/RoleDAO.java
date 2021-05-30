@@ -1,6 +1,6 @@
 package net.ysq.shiro.dao;
 
-import net.ysq.shiro.entity.Permission;
+import net.ysq.shiro.po.Permission;
 
 import java.util.List;
 

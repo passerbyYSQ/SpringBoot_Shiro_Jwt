@@ -15,13 +15,21 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: 'jdbc:mysql://127.0.0.1:3306/shiro?characterEncoding=utf-8&serverTimezone=Asia/Shanghai'
     username: 'root'
-    password: ''
+    password: 'ysqJYKL2010'
+  # redis相关配置。Lettuce相关配置均用默认值即可
+  redis:
+    host:
+    port: 6379
+    password: 
+    database: 0
 
 mybatis:
-  type-aliases-package: net.ysq.shiro.entity
+  type-aliases-package: net.ysq.shiro.po
   mapper-locations: 'classpath:mapper/*.xml'
   configuration:
     # 驼峰命名转换
     map-underscore-to-camel-case: true
     # 增加打印sql语句，一般用于本地开发测试
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+

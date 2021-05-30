@@ -1,10 +1,14 @@
 package net.ysq.shiro.shiro;
 
-import net.ysq.shiro.entity.User;
-import net.ysq.shiro.utils.JwtUtil;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import net.ysq.shiro.po.User;
+import net.ysq.shiro.utils.JwtUtils;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.credential.CredentialsMatcher;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author passerbyYSQ
@@ -14,13 +18,20 @@ public class JwtCredentialsMatcher implements CredentialsMatcher {
     @Override
     public boolean doCredentialsMatch(AuthenticationToken token, AuthenticationInfo info) {
         //  AuthenticationInfo info 是我们在JwtRealm中doGetAuthenticationInfo()返回的那个
-        User user = (User) info.getPrincipals().getPrimaryPrincipal();
-        String secret = (String) info.getCredentials();
+        User user = (User) info.getCredentials();
 
-//        String tokenStr = ((JwtToken) token).getToken();
-        String tokenStr = (String) token.getPrincipal();
+        //String tokenStr = (String) token.getPrincipal();
+        String tokenStr = (String) info.getPrincipals().getPrimaryPrincipal();
 
-        // 校验jwt有效
-        return JwtUtil.verifyJwt(tokenStr, user.getUsername(), secret);
+        // 校验失败，会抛出异常，被shiro捕获
+        Map<String, String> claims = new HashMap<>();
+        claims.put("username", user.getUsername());
+        try {
+            JwtUtils.verifyJwt(tokenStr, user.getJwtSecret(), claims);
+            return true;
+        } catch (JWTVerificationException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
